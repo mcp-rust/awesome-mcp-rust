@@ -1,0 +1,9 @@
+{
+  "default": true,
+  "line-length": false,
+  "no-duplicate-heading": false,
+  "no-inline-html": {
+    "allowed_elements": ["img", "br", "div", "sup", "sub"]
+  },
+  "no-bare-urls": false
+}

@@ -1,0 +1,108 @@
+name: Awesome List CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Check links weekly
+    - cron: '0 0 * * 0'
+
+jobs:
+  awesome-lint:
+    name: Awesome Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Lint awesome list
+      uses: max/awesome-lint@v2
+      with:
+        config: '.github/awesome-lint.json'
+
+  link-check:
+    name: Link Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        config-file: '.github/link-check-config.json'
+        folder-path: '.'
+        file-path: './README.md'
+
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check markdown formatting
+      uses: DavidAnson/markdownlint-cli2-action@v16
+      with:
+        config: '.github/markdownlint.json'
+        globs: '**/*.md'
+
+  contribution-check:
+    name: Contribution Guidelines Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify CONTRIBUTING.md exists
+      run: |
+        if [ ! -f CONTRIBUTING.md ]; then
+          echo "CONTRIBUTING.md is missing"
+          exit 1
+        fi
+        echo "CONTRIBUTING.md exists ✓"
+    
+    - name: Check for required sections in README
+      run: |
+        sections=(
+          "## Contents"
+          "## Official Libraries" 
+          "## Servers"
+          "## Clients"
+          "## Tools & Utilities"
+          "## Templates"
+          "## Contributing"
+        )
+        
+        for section in "${sections[@]}"; do
+          if ! grep -q "$section" README.md; then
+            echo "Missing required section: $section"
+            exit 1
+          fi
+          echo "Found section: $section ✓"
+        done
+
+  validate-projects:
+    name: Validate Project Links
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Extract and validate GitHub links
+      run: |
+        # Extract GitHub repository links from README
+        github_links=$(grep -oP 'https://github\.com/[^)]+' README.md | sort | uniq)
+        
+        echo "Found GitHub links:"
+        echo "$github_links"
+        
+        # Check if links follow naming conventions
+        echo ""
+        echo "Checking naming conventions..."
+        
+        while IFS= read -r link; do
+          if [[ $link =~ mcp.*server ]]; then
+            echo "✓ Server link follows convention: $link"
+          elif [[ $link =~ mcp.*client ]]; then
+            echo "✓ Client link follows convention: $link"
+          elif [[ $link =~ mcp.*template ]]; then
+            echo "✓ Template link follows convention: $link"
+          elif [[ $link =~ awesome.*mcp ]]; then
+            echo "✓ Awesome list link: $link"
+          else
+            echo "ℹ General MCP project: $link"
+          fi
+        done <<< "$github_links"

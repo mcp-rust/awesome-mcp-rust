@@ -1,0 +1,13 @@
+{
+  "retryOnHttps": true,
+  "aliveStatusCodes": [200, 206, 429],
+  "timeout": "20s",
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://crates.io/crates/mcp-"
+    }
+  ]
+}
